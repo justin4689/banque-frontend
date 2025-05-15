@@ -112,7 +112,7 @@ export async function register(name: string, email: string, password: string) {
 export async function profile() {
   const cookieStore = await cookies();
   const token = cookieStore.get('token')?.value;
-  console.log(token);
+  
  
   
    try {

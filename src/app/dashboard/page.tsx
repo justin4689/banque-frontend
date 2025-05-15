@@ -27,9 +27,6 @@ export default function DashboardPage() {
   const { data: profileData, isLoading, error } = useProfile();
   console.log(profileData);
 
-  if (isLoading) {
-    return <div style={{textAlign: 'center', marginTop: '3rem'}}>Chargement du profil...</div>;
-  }
   if (error) {
     return <div style={{color: 'red', textAlign: 'center', marginTop: '3rem'}}>Erreur lors du chargement du profil utilisateur</div>;
   }
