@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { SkeletonBox } from "../../../components/SkeletonBox"
 
 import { logout } from "../../../lib/action/auth.action";
+import { transfer, getTransferHistory } from "../../../lib/action/transfer.action";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useProfile } from "@/hook/useProfile";
@@ -24,11 +25,11 @@ export default function DashboardPage() {
 
   const [userData, setUserData] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
-  const [historique, setHistorique] = useState(MOCK_HISTORIQUE);
+  const [historique, setHistorique] = useState<any[]>([]);
   const [solde, setSolde] = useState(MOCK_SOLDE);
 
   // Utilisation du hook useProfile
-  const { data: profileData, isLoading, error } = useProfile();
+  const { data: profileData, isLoading, error, refetch } = useProfile();
   console.log(profileData);
 
   if (error) {
@@ -40,6 +41,19 @@ export default function DashboardPage() {
       setUserData(profileData.data);
       if (profileData.data && profileData.data.accounts && profileData.data.accounts.length > 0) {
         setSolde(profileData.data.accounts[0].balance);
+        // Fetch transfer history for the main account
+        const accountNumber = profileData.data.accounts[0].account_number;
+        getTransferHistory(accountNumber).then((res) => {
+          if (res.success && Array.isArray(res.data)) {
+            console.log('Historique transactions:', res.data);
+            setHistorique(res.data);
+          } else if (res.success && res.data && Array.isArray(res.data.transactions)) {
+            console.log('Historique transactions:', res.data.transactions);
+            setHistorique(res.data.transactions);
+          } else {
+            setHistorique([]);
+          }
+        });
       }
     }
   }, [profileData]);
@@ -57,31 +71,47 @@ export default function DashboardPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      // Simulation succès/échec
-      if (form.destinataire && Number(form.montant) > 0) {
-        toast.success("Transfert effectué avec succès !");
-        setSolde((s) => s - Number(form.montant));
-        setHistorique([
-          {
-            id: Date.now(),
-            expediteur: "Vous",
-            destinataire: form.destinataire,
-            montant: Number(form.montant),
-            date: new Date().toISOString().slice(0, 10),
-          },
-          ...historique,
-        ]);
-        handleCloseModal();
-      } else {
-        toast.error("Veuillez remplir tous les champs correctement.");
-      }
-    }, 900);
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  if (!form.destinataire || Number(form.montant) <= 0) {
+    toast.error("Veuillez remplir tous les champs correctement.");
+    setLoading(false);
+    return;
+  }
+  if (!userData || !userData.accounts || userData.accounts.length === 0) {
+    toast.error("Impossible de trouver le compte expéditeur.");
+    setLoading(false);
+    return;
+  }
+  const sender_account_number = userData.accounts[0].account_number;
+  const receiver_account_number = form.destinataire;
+  const amount = Number(form.montant);
+  console.log(sender_account_number, receiver_account_number, amount);
+  const res = await transfer(sender_account_number, receiver_account_number, amount);
+  setLoading(false);
+  if (res.success) {
+    toast.success("Transfert effectué avec succès !");
+    // Refetch profile to update solde and accounts
+    if (typeof refetch === 'function') {
+      refetch();
+    }
+    // Refresh transfer history from backend
+    if (userData && userData.accounts && userData.accounts.length > 0) {
+      const accountNumber = userData.accounts[0].account_number;
+      getTransferHistory(accountNumber).then((historyRes) => {
+        if (historyRes.success && Array.isArray(historyRes.data)) {
+          setHistorique(historyRes.data);
+        } else if (historyRes.success && historyRes.data && Array.isArray(historyRes.data.transactions)) {
+          setHistorique(historyRes.data.transactions);
+        }
+      });
+    }
+    handleCloseModal();
+  } else {
+    toast.error(res.error || "Erreur lors du transfert.");
+  }
+};
 
   const router = useRouter();
   const handleLogout = async () => {
@@ -97,14 +127,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-2 sm:p-6 flex flex-col items-center">
       {/* Barre du haut avec bouton Déconnexion */}
-      <div className="w-full max-w-2xl flex justify-end mt-4">
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded shadow transition-colors duration-200"
-        >
-          Déconnexion
-        </button>
-      </div>
+     
       <div className="w-full max-w-2xl bg-white rounded-lg shadow-lg p-4 sm:p-8 mt-4 sm:mt-8">
 
         <div className="flex justify-center items-center mb-2">
@@ -160,17 +183,39 @@ export default function DashboardPage() {
                   <td colSpan={4} className="text-center py-4 text-gray-400">Aucune transaction</td>
                 </tr>
               ) : (
-                historique.map((t) => (
-                  <tr key={t.id} className="border-t">
-                    <td className="px-3 py-2">{t.expediteur}</td>
-                    <td className="px-3 py-2">{t.destinataire}</td>
-                    <td className="px-3 py-2">{t.montant.toLocaleString("fr-FR", { style: "currency", currency: "XOF" })}</td>
-                    <td className="px-3 py-2">{t.date}</td>
-                  </tr>
-                ))
+                historique.map((t) => {
+                  const expediteur = t.expediteur ?? t.sender_account_number ?? '-';
+                  const destinataire = t.destinataire ?? t.receiver_account_number ?? '-';
+                  const montant = typeof t.montant === 'number' ? t.montant : (typeof t.amount === 'number' ? t.amount : 0);
+                  const dateRaw = t.date ?? t.created_at ?? '-';
+                  let dateAffichee = '-';
+                  if (typeof dateRaw === 'string' || typeof dateRaw === 'number') {
+                    const d = new Date(dateRaw);
+                    if (!isNaN(d.getTime())) {
+                      dateAffichee = d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                    }
+                  }
+                  return (
+                    <tr key={t.id || t._id || Math.random()} className="border-t">
+                      <td className="px-3 py-2">{expediteur}</td>
+                      <td className="px-3 py-2">{destinataire}</td>
+                      <td className="px-3 py-2">{montant.toLocaleString("fr-FR", { style: "currency", currency: "XOF" })}</td>
+                      <td className="px-3 py-2">{dateAffichee}</td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
+
           </table>
+          <div className="w-full max-w-2xl flex justify-end mt-4">
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded shadow transition-colors duration-200"
+        >
+          Déconnexion
+        </button>
+      </div>
         </div>
       </div>
 
