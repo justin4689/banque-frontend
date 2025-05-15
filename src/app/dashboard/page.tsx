@@ -2,6 +2,14 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { SkeletonBox } from "../../../components/SkeletonBox"
+
+import { logout } from "../../../lib/action/auth.action";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useProfile } from "@/hook/useProfile";
+import Image from "next/image";
+
 // Mocks de données
 const MOCK_SOLDE = 1250.75;
 const MOCK_HISTORIQUE = [
@@ -10,10 +18,6 @@ const MOCK_HISTORIQUE = [
   { id: 3, expediteur: "FR112233445", destinataire: "Vous", montant: 200, date: "2025-05-01" },
 ];
 
-import { logout } from "../../../lib/action/auth.action";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { useProfile } from "@/hook/useProfile";
 
 export default function DashboardPage() {
   // Affichage sécurisé pour éviter écran blanc
@@ -102,33 +106,43 @@ export default function DashboardPage() {
         </button>
       </div>
       <div className="w-full max-w-2xl bg-white rounded-lg shadow-lg p-4 sm:p-8 mt-4 sm:mt-8">
+
+        <div className="flex justify-center items-center mb-2">
+          <Image src="/logo.png" alt="Logo" width={80} height={80} className="sm:w-[100px] sm:h-[100px]" />
+        </div>
         <h1 className="text-2xl font-bold mb-6 text-gray-800 text-center">Tableau de bord</h1>
         {/* Section informations utilisateur et comptes */}
-        {userData && (
+        {isLoading ? (
+          <section className="mb-8">
+            <SkeletonBox className="h-6 w-48 mb-4" />
+            <SkeletonBox className="h-5 w-32 mb-2" />
+            <SkeletonBox className="h-10 w-full mb-4" />
+            <SkeletonBox className="h-5 w-40 mb-2" />
+            <SkeletonBox className="h-16 w-full mb-2" />
+            <SkeletonBox className="h-16 w-full mb-2" />
+          </section>
+        ) : userData && (
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-2">Informations du titulaire</h2>
             <div>Nom : <span className="font-bold">{userData.name}</span></div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4 mb-8">
+              <button
+                onClick={handleOpenModal}
+                className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-6 py-2 rounded transition-colors duration-200 shadow"
+              >
+                Nouveau transfert
+              </button>
+            </div>
             <h3 className="text-lg font-semibold mt-4 mb-2">Compte(s)</h3>
             {userData.accounts && userData.accounts.map((account: any, idx: number) => (
               <div key={account.account_number} className="mb-2 p-2 border rounded">
-                <div>Numéro : <span className="font-mono">{account.account_number}</span></div>
-                <div>Solde : <span className="font-bold text-green-600">{account.balance.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}</span></div>
+                <div>Numéro Du Compte Bancaire: <span className="font-mono">{account.account_number}</span></div>
+                <div>Solde : <span className="font-bold text-green-600">{account.balance.toLocaleString("fr-FR", { style: "currency", currency: "XOF" })}</span></div>
               </div>
             ))}
           </section>
         )}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <div>
-            <div className="text-gray-500 text-sm">Solde du compte</div>
-            <div className="text-3xl font-bold text-green-600">{solde.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}</div>
-          </div>
-          <button
-            onClick={handleOpenModal}
-            className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-6 py-2 rounded transition-colors duration-200 shadow"
-          >
-            Nouveau transfert
-          </button>
-        </div>
+       
         <h2 className="text-lg font-semibold mb-3 text-gray-700">Historique des transferts</h2>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm border rounded-lg">
@@ -150,7 +164,7 @@ export default function DashboardPage() {
                   <tr key={t.id} className="border-t">
                     <td className="px-3 py-2">{t.expediteur}</td>
                     <td className="px-3 py-2">{t.destinataire}</td>
-                    <td className="px-3 py-2">{t.montant.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}</td>
+                    <td className="px-3 py-2">{t.montant.toLocaleString("fr-FR", { style: "currency", currency: "XOF" })}</td>
                     <td className="px-3 py-2">{t.date}</td>
                   </tr>
                 ))
@@ -187,7 +201,7 @@ export default function DashboardPage() {
                 />
               </div>
               <div>
-                <label htmlFor="montant" className="block text-sm font-medium mb-1">Montant (€)</label>
+                <label htmlFor="montant" className="block text-sm font-medium mb-1">Montant (CFA)</label>
                 <input
                   type="number"
                   id="montant"
