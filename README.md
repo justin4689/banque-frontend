@@ -53,21 +53,21 @@ banque-frontend/
 Les images suivantes illustrent l'interface de l'application. Elles sont stockées dans le dossier `public/` et utilisées dans l'app ou dans ce README :
 
 ### Page de connexion
-![Login](/login_1.png)
+![Login](public/login_1.png)
 
 ### Page d'inscription
-![Register](/register_1.png)
-![Register confirmation](/register_2.png)
+![Register](public/register_1.png)
+![Register confirmation](public/register_2.png)
 
 ### Tableau de bord
-![Dashboard](/dashboard_1.png)
-![Dashboard - suite](/dashboard_2.png)
+![Dashboard](public/dashboard_1.png)
+![Dashboard - suite](public/dashboard_2.png)
 
 ### Effectuer un transfert
-![Transfert](/make_transaction.png)
+![Transfert](public/make_transaction.png)
 
 ### Logo de l'application
-![Logo](/logo.png)
+![Logo](public/logo.png)
 
 ---
 
