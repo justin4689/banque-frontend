@@ -2,17 +2,102 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+### 1. Installation des dépendances
+
+Installez les dépendances du projet :
+
+```bash
+npm install
+# ou
+yarn install
+```
+
+### 2. Lancement du serveur de développement
 
 ```bash
 npm run dev
-# or
+# ou
 yarn dev
-# or
+# ou
 pnpm dev
-# or
+# ou
 bun dev
 ```
+
+L'application sera disponible sur [http://localhost:3000](http://localhost:3000).
+
+---
+
+## Structure du projet
+
+- `src/` : Contient toute la logique applicative (pages, hooks, composants, etc)
+- `public/` : Contient les images et assets statiques utilisés dans l'application (logos, captures d'écran...)
+- `lib/` : Fonctions utilitaires et appels API
+- `components/` : Composants réutilisables (ex : SkeletonBox)
+
+### Détail de `src/`
+
+```
+banque-frontend/
+├── src/
+│   ├── app/                # Pages Next.js (ex: dashboard, login, register...)
+│   ├── hook/               # Hooks personnalisés (ex: useProfile)
+│   ├── middleware.ts       # Middleware Next.js
+│   └── ...
+```
+
+---
+
+## Images et captures d'écran
+
+Les images suivantes illustrent l'interface de l'application. Elles sont stockées dans le dossier `public/` et utilisées dans l'app ou dans ce README :
+
+### Page de connexion
+![Login](/login_1.png)
+
+### Page d'inscription
+![Register](/register_1.png)
+![Register confirmation](/register_2.png)
+
+### Tableau de bord
+![Dashboard](/dashboard_1.png)
+![Dashboard - suite](/dashboard_2.png)
+
+### Effectuer un transfert
+![Transfert](/make_transaction.png)
+
+### Logo de l'application
+![Logo](/logo.png)
+
+---
+
+## Configuration du fichier `.env`
+
+Avant de lancer l'application, créez un fichier `.env` à la racine du projet (s'il n'existe pas déjà) et ajoutez-y la variable suivante :
+
+```env
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api
+```
+
+> Remplacez la valeur par l'URL de votre backend (par exemple : `http://127.0.0.1:8000/api`). Cette variable permet à l'application de communiquer avec votre API.
+
+- Les images du dossier `public/` sont accessibles via `/nom_image.png` dans le code ou dans le navigateur.
+- Pour ajouter de nouvelles images, placez-les simplement dans `public/` et utilisez-les avec la balise `<Image src="/nom_image.png" ... />` de Next.js.
+
+---
+
+## Démarrage rapide
+
+1. Clonez le repo
+2. Installez les dépendances
+3. Configurez `.env`
+4. Lancez le serveur
+5. Rendez-vous sur [http://localhost:3000](http://localhost:3000)
+
+---
+
+Pour toute question ou contribution, ouvrez une issue ou une pull request !
+
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
